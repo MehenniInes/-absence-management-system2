@@ -146,9 +146,10 @@ document.getElementById("showReportBtn").addEventListener("click", function() {
     const ctx = document.getElementById('reportChart').getContext('2d');
 
     // Destroy previous chart if it exists
-    if (window.reportChart) window.reportChart.destroy();
-
-    window.reportChart = new Chart(ctx, {
+    if (window.reportChart instanceof Chart) {
+    window.reportChart.destroy();
+}
+ window.reportChart = new Chart(ctx, {
         type: 'bar',
         data: {
             labels: ['Total Students', 'Present', 'Participated'],
@@ -167,3 +168,63 @@ document.getElementById("showReportBtn").addEventListener("click", function() {
         }
     });
 });
+$(document).ready(function() {
+
+    // ===== Hover highlight =====
+    $("#attendanceTable").on("mouseenter", "tr", function() {
+        $(this).data("origColor", $(this).css("background-color"));
+        $(this).css("background-color", "#f2f2f2");
+    });
+
+    $("#attendanceTable").on("mouseleave", "tr", function() {
+        $(this).css("background-color", $(this).data("origColor"));
+    });
+
+    // ===== Row click = show student info =====
+    $("#attendanceTable").on("click", "tr", function() {
+        const last = $(this).find("td").eq(0).text();
+        const first = $(this).find("td").eq(1).text();
+        const abs = $(this).find(".absence-count").text();
+
+        // Skip header row
+        if (last && first && abs) {
+            alert("Student: " + first + " " + last + "\nAbsences: " + abs);
+        }
+    });
+
+    // ===== Prevent checkbox click from triggering row click =====
+    $("#attendanceTable").on("click", ".attendance, .participation", function(e) {
+        e.stopPropagation();
+    });
+
+});
+$(document).ready(function() {
+
+    let highlightInterval; // to store the interval ID
+
+    // ===== Highlight Excellent Students continuously =====
+    $("#highlightExcellent").click(function() {
+        // Clear any previous interval first
+        clearInterval(highlightInterval);
+
+        highlightInterval = setInterval(function() {
+            $("#attendanceTable tr").each(function() {
+                const absences = parseInt($(this).find(".absence-count").text());
+                if (!isNaN(absences) && absences < 3) {
+                    $(this).fadeOut(300).fadeIn(300);
+                }
+            });
+        }, 600); // loop every 600ms
+    });
+
+    // ===== Reset Colors / Stop Highlight =====
+    $("#resetColors").click(function() {
+        clearInterval(highlightInterval); // stop the interval
+        $("#attendanceTable tr").each(function() {
+            $(this).stop(true, true).show(); // stop ongoing fade animations
+        });
+    });
+
+});
+
+
